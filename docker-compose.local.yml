@@ -1,0 +1,17 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: hackathon-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: hackathon
+      MYSQL_USER: hackathon_user
+      MYSQL_PASSWORD: hackathon_password
+    ports:
+      - "3306:3306"
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_0900_ai_ci
+    volumes:
+      - hackathon_mysql_data:/var/lib/mysql
+
+volumes:
+  hackathon_mysql_data:
