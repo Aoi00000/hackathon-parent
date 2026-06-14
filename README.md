@@ -1,35 +1,32 @@
-# Webコース準拠 AIフリマアプリ Starter
+# AI Flea Market
 
-このスターターは、研修資料のWebコース要件に合わせて、Goバックエンド、Reactフロントエンド、MySQL、Gemini API、GCPデプロイを前提にしたMVPです。
+React + Go + MySQL + Gemini / Vertex AI によるWebコース準拠の次世代フリマアプリです。
 
-## MVPで満たす機能
+## 主な機能
 
 - ユーザー登録・ログイン
-- 商品一覧・検索
-- 商品出品
-- 商品購入
-- 商品に紐づくDM
-- Gemini APIによる商品説明生成
-- Gemini APIによる商品Q&A
+- 商品出品・購入・取引状態管理
+- 公開コメント / 非公開DM
+- チェックリスト
+- 通知一覧
+- 残高チャージと仮想通貨決済
+- 商品一覧のAmazon風サイドバー検索
+- 曖昧検索
+- AI商品説明生成
+- AI質問応答
+- AI購入アシスト
+- 購入前AIチェック
+- 日本語 / English 表示切り替え
+- MerRec を使ったMLレコメンド実験環境
 
-## ディレクトリ
+## 注意
 
-- `hackathon-backend`: Go + MySQL + Gemini API。Cloud Runにデプロイします。
-- `hackathon-frontend`: React + TypeScript + Vite。静的ファイルをnginxで配信するコンテナとしてCloud Runにデプロイします。
+`package-lock.json` は配布zipに含めていません。利用環境の public npm registry で再生成してください。
 
-## ローカル起動の流れ
-
-1. MySQLで `migrations/001_init.sql` を実行する
-2. `hackathon-backend/.env.example` を参考に環境変数を設定する
-3. `cd hackathon-backend && go mod tidy && go run ./cmd/server`
-4. `hackathon-frontend/.env.example` を `.env` にコピーする
-5. `cd hackathon-frontend && npm install && npm run dev`
-
-## GCPデプロイの流れ
-
-1. Cloud SQL for MySQLを作成
-2. 初期SQLを投入
-3. Secret ManagerにDBパスワード、JWT_SECRET、GEMINI_API_KEYを登録
-4. Cloud Runにバックエンドをデプロイ
-5. Cloud Runにフロントエンドをデプロイ
-6. `FRONTEND_ORIGIN` と `VITE_API_BASE_URL` を相互に正しく設定する
+```bash
+cd hackathon-frontend
+npm config set registry https://registry.npmjs.org/
+rm -rf node_modules package-lock.json
+npm install --registry=https://registry.npmjs.org/
+npm run build
+```
