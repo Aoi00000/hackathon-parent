@@ -1,8 +1,5 @@
-"""MerRec学習済みpickleを使う軽量HTTP推論サーバー。
-
-依存を増やさないため、標準ライブラリのhttp.serverで実装しています。
-本番ではFastAPI化してCloud Runに載せても構いません。
-"""
+#!/usr/bin/env python3
+"""Lightweight HTTP inference server for the MerRec recommendation model."""
 from __future__ import annotations
 
 import argparse
@@ -12,70 +9,81 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-from scipy import sparse
-from sklearn.preprocessing import StandardScaler
-
-
-def recommend(model: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
-    items = model["items"]
-    content = model["content"]
-    tfidf = content["tfidf"]
-    reducer = content["reducer"]
-    nn = content["nn"]
-    top_k = int(payload.get("top_k", 5))
-    title = str(payload.get("title", ""))
-    category = str(payload.get("category", ""))
-    brand = str(payload.get("brand", ""))
-    price = float(payload.get("price", 0) or 0)
-    session_titles = payload.get("session_titles") or []
-    text = " ".join([title, category, brand, *map(str, session_titles)])
-    text_x = tfidf.transform([text])
-    # 学習時と同じくlog価格を弱い特徴として足します。
-    log_price = np.log1p(max(price, 0))
-    price_x = sparse.csr_matrix([[log_price * 0.35]])
-    x = sparse.hstack([text_x, price_x], format="csr")
-    vec = reducer.transform(x)
-    distances, indices = nn.kneighbors(vec, n_neighbors=min(top_k, len(items)))
-    recs = []
-    for dist, idx in zip(distances[0], indices[0]):
-        row = items.iloc[int(idx)]
-        recs.append({
-            "item_id": str(row["item_id"]),
-            "title": str(row.get("title", "")),
-            "category": str(row.get("category_path", "")),
-            "price": float(row.get("price", 0) or 0),
-            "score": float(1.0 - dist),
-        })
-    return {"reason": "MerRecのC2C行動特徴を想定したTF-IDF/価格/カテゴリ類似推薦です。", "items": recs}
+from merrec_model import MerRecModel, recommend_from_payload
 
 
 class Handler(BaseHTTPRequestHandler):
-    model: dict[str, Any]
+    model: MerRecModel | None = None
+
+    def _send_json(self, status: int, body: dict[str, Any]) -> None:
+        data = json.dumps(body, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def do_GET(self) -> None:  # noqa: N802
+        if self.path == "/healthz":
+            loaded = Handler.model is not None
+            self._send_json(200, {"status": "ok", "model_loaded": loaded})
+            return
+        if self.path == "/category-insights":
+            if Handler.model is None:
+                self._send_json(500, {"error": "model is not loaded"})
+                return
+            self._send_json(200, {"category_insights": Handler.model.category_insights})
+            return
+        self._send_json(404, {"error": "not found"})
 
     def do_POST(self) -> None:  # noqa: N802
         if self.path != "/recommend":
-            self.send_response(404); self.end_headers(); return
-        length = int(self.headers.get("Content-Length", "0"))
-        payload = json.loads(self.rfile.read(length) or b"{}")
-        result = recommend(self.model, payload)
-        body = json.dumps(result, ensure_ascii=False).encode("utf-8")
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+            self._send_json(404, {"error": "not found"})
+            return
+        if Handler.model is None:
+            self._send_json(500, {"error": "model is not loaded"})
+            return
+
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            raw = self.rfile.read(length)
+            payload = json.loads(raw.decode("utf-8")) if raw else {}
+            result = recommend_from_payload(Handler.model, payload)
+            self._send_json(200, result)
+        except Exception as exc:  # pragma: no cover - server safety net
+            self._send_json(500, {"error": "recommendation failed", "detail": str(exc)})
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Serve merrec_model.MerRecModel over HTTP.")
+    parser.add_argument("--model", type=Path, default=Path("ml/merrec_model.pkl"))
+    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=8090)
+    return parser.parse_args()
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=Path, required=True)
-    parser.add_argument("--port", type=int, default=8090)
-    args = parser.parse_args()
+    args = parse_args()
     with args.model.open("rb") as f:
-        Handler.model = pickle.load(f)
-    server = HTTPServer(("0.0.0.0", args.port), Handler)
-    print(f"MerRec recommender service listening on :{args.port}")
+        model = pickle.load(f)
+
+    if not isinstance(model, MerRecModel):
+        raise TypeError(
+            "This service expects a merrec_model.MerRecModel pickle. "
+            "Please recreate it with the cleaned ml/merrec_recommender.py."
+        )
+
+    Handler.model = model
+    server = HTTPServer((args.host, args.port), Handler)
+    print(f"MerRec recommender service listening on http://{args.host}:{args.port}")
+    print("healthz:")
+    print(f"  curl http://{args.host}:{args.port}/healthz")
+    print("recommend example:")
+    print(
+        f"  curl -X POST http://{args.host}:{args.port}/recommend "
+        "-H 'Content-Type: application/json' "
+        "-d '{\"title\":\"calculus textbook beginner math\",\"category\":\"Books\",\"price\":1200,\"top_k\":5}'"
+    )
     server.serve_forever()
 
 

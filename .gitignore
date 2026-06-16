@@ -1,28 +1,38 @@
-# ============================================================
-# Parent repository ignore rules
-# ============================================================
-# この親リポジトリでは、設計用のExcelファイルとdraw.ioファイルを
-# Git管理しない方針とする。
-# チームで共有したい場合は、Google Drive等の別手段で管理する。
-# ============================================================
-
-# 設計ファイル
-*.xlsx
-*.drawio
-
-# macOSが自動生成するファイル
+# ===== OS / editor files =====
 .DS_Store
-
-# エディタ/IDEの個人設定
+*.swp
+*.swo
 .vscode/
 .idea/
 
-# 念のため、親ディレクトリ直下に.envを置いた場合も追跡しない
+# ===== Environment variables =====
+# Secrets such as JWT_SECRET, DB password, Gemini API key must not be committed.
 .env
 .env.*
 
-# ログや一時ファイル
-*.log
-tmp/
-temp/
-EOF
+# ===== Frontend generated files =====
+node_modules/
+dist/
+*.tsbuildinfo
+package-lock.json
+
+# ===== Backend / Go generated files =====
+*.test
+coverage.out
+
+# ===== Python / MerRec generated files =====
+.venv-ml/
+__pycache__/
+*.pyc
+ml/merrec_model.pkl
+ml/merrec_artifact.json
+ml/*.pkl
+ml/*_artifact.json
+
+# ===== Large local datasets =====
+data/
+
+# ===== Design documents =====
+# Ignore arbitrary Excel/drawio working copies.
+*.xlsx
+*.drawio

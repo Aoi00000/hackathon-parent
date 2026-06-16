@@ -1,15 +1,28 @@
+# ローカル開発用のMySQLだけを起動するdocker compose設定です。
+# GoバックエンドとReactフロントエンドは、学習しやすいように通常のローカルプロセスとして起動します。
 services:
   mysql:
+    # 研修・ハッカソン用途で安定して使えるMySQL 8.0を利用します。
     image: mysql:8.0
+
+    # コンテナ名を固定しておくと、docker ps で見つけやすくなります。
     container_name: hackathon-mysql
+
+    # 初回起動時に作成されるDB・ユーザー・パスワードです。
     environment:
       MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: hackathon
       MYSQL_USER: hackathon_user
       MYSQL_PASSWORD: hackathon_password
+
+    # ローカルPCの3306番をコンテナの3306番へ接続します。
     ports:
       - "3306:3306"
+
+    # 日本語の商品名・コメント・DMを安全に保存するため、utf8mb4を明示します。
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_0900_ai_ci
+
+    # DBデータをvolumeに保存します。完全初期化したい場合は down -v を使います。
     volumes:
       - hackathon_mysql_data:/var/lib/mysql
 

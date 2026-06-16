@@ -1,0 +1,9 @@
+user_id,stime,session_id,item_id,name,price,c0_name,c1_name,c2_name,brand_name,event_id,item_condition_name,size_name,color,shipper_name
+u1,2026-01-01T00:00:00Z,s1,i1,calculus textbook beginner math,12,Books,Education,Math,UT Press,item_view,Good,,,
+u1,2026-01-01T00:01:00Z,s1,i2,linear algebra textbook university,14,Books,Education,Math,UT Press,item_view,Good,,,
+u2,2026-01-01T00:02:00Z,s2,i3,guitar effect pedal overdrive,80,Music,Instruments,Guitar,Boss,item_like,Good,,black,
+u2,2026-01-01T00:03:00Z,s2,i4,electric guitar beginner set,220,Music,Instruments,Guitar,Yamaha,buy_start,Good,,red,
+u3,2026-01-01T00:04:00Z,s3,i5,math entrance exam reference book,10,Books,Education,Math,Study,item_like,Good,,,
+u3,2026-01-01T00:05:00Z,s3,i6,physics reference book beginner,11,Books,Education,Science,Study,item_view,Good,,,
+u4,2026-01-01T00:06:00Z,s4,i7,used laptop charger cable,20,Electronics,PC,Accessory,Apple,item_view,Used,,white,
+u4,2026-01-01T00:07:00Z,s4,i8,macbook usb c adapter,25,Electronics,PC,Accessory,Apple,buy_comp,Used,,white,
