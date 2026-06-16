@@ -1,161 +1,97 @@
-# IMPLEMENTATION_NOTES
+# IMPLEMENTATION NOTES
 
-このドキュメントは、AI Flea Market の実装意図、責務分離、発展的機能、Demo Day向けの見せ方をまとめたものです。
+このファイルは、ハッカソンの評価項目に合わせて、実装上の工夫、設計意図、保守上の注意点を整理したものです。
 
-## 1. アーキテクチャ
+## 1. 設計方針
 
-### バックエンド
+AI Flea Market は、短期間のハッカソン開発でも説明しやすく、機能追加しやすいように、次の責務分離を基本にしています。
 
-```text
-hackathon-backend/
-├── cmd/server/main.go              # 起動点。設定読み込み、DB接続、ルーティング登録を行う。
-├── internal/config/config.go       # 環境変数をConfig構造体へ集約する。
-├── internal/db/db.go               # MySQL接続を作る。
-├── internal/models/models.go       # APIレスポンス・リクエスト・DBモデルを定義する。
-├── internal/repository/            # DB操作を集約する。
-├── internal/handler/handler.go     # HTTPリクエストを受け、repository/aiを呼び出す。
-└── internal/ai/gemini.go           # Gemini / Vertex AI / フォールバック生成を扱う。
-```
+- React側はUI状態とAPI呼び出しに集中する。
+- Go側は認証、DB更新、取引整合性、AI呼び出し、通知生成を担当する。
+- Python側はMerRecなどの重い分析処理をアプリ本体から分離する。
+- DB初期化は `001_init.sql` 一つで完結させ、Demo Day前に再現しやすくする。
 
-責務を完全に分離することで、DB、HTTP、AI、認証の修正が互いに影響しにくい構造にしています。
+## 2. フロントエンドの主な整理
 
-### フロントエンド
+### API呼び出し
 
-```text
-hackathon-frontend/src/
-├── api/client.ts                   # API通信を一元化する。
-├── context/AuthContext.tsx         # ログイン状態を保持する。
-├── pages/                          # 画面単位のReactコンポーネント。
-├── utils.ts                        # 日時、金額、画像URLなどの共通処理。
-├── imageUpload.ts                  # 画像ファイルをData URLへ変換する。
-├── searchUtils.ts                  # 表記揺れ検索・曖昧検索。
-└── styles.css                      # UI全体の一貫したデザイン。
-```
+`hackathon-frontend/src/api/client.ts` に集約しています。
+画面ごとに `fetch` を直接書くと、認証ヘッダー、エラー処理、null配列対策が重複するためです。
 
-## 2. AI設計
+### 日本語固定表示
 
-外部AI呼び出しは `internal/ai/gemini.go` に集約しています。
+途中で英語切り替え機能をやめたため、`i18n.tsx` と `TranslatedText.tsx` は日本語固定の薄い互換レイヤーとして残しています。
+既存の呼び出しを消して回るよりも、副作用が少なく、画面表示を安定させられるためです。
 
-処理の流れは次の通りです。
+### 商品画像
 
-1. `AI_PROVIDER` を見る
-2. `vertex` の場合は Vertex AI を呼ぶ
-3. `ai_studio` の場合は Google AI Studio API を呼ぶ
-4. 429や認証エラーなどで失敗した場合は、ローカル簡易生成へフォールバック
-5. フォールバック理由はログとAPIレスポンスに分離して返す
+DB列は互換性のため `image_url` のままです。
+ただし中身は次の両方に対応します。
 
-この構成により、外部AIの利用枠が切れていても、デモ中にアプリが止まりません。
+- 旧形式: 単一画像URL文字列
+- 新形式: JSON文字列化した画像URL配列
 
-## 3. Vertex AI 429対策
+変換処理は `src/utils.ts` の `parseImageUrls()` と `stringifyImageUrls()` に集約しています。
 
-現在のコードでは以下を実装しています。
+### 自然言語検索
 
-- `GEMINI_MODEL=gemini-2.5-flash`
-- `VERTEX_LOCATION=global`
-- 5回の短い指数バックオフ
-- フォールバック時のログ表示
+商品一覧トップ右側に自然言語検索欄を置いています。
+ユーザー入力は `POST /api/ai/parse-search` に送り、既存の検索フォームパラメータに変換してから、通常の商品一覧APIに流します。
+この構成により、自然言語検索専用の別検索APIを増やさず、既存の検索UIと検索ロジックを再利用できます。
 
-429 ResourceExhausted はアプリのバグではなく、Vertex AI側の割当・共有容量・一時混雑で起こります。
-本番では Quota Increase Request や Provisioned Throughput の検討が必要です。
+## 3. バックエンドの主な整理
 
-## 4. UX上の工夫
+### Repository層
 
-- Amazon/Mercari風の左サイドバー検索
-- コンパクトな商品カード
-- 複数画像カルーセル
-- 出品画像の個別削除
-- 出品履歴から画像を再編集
-- 通知バッジ
-- 既読/未読通知
-- 出品キャンセル通知
-- チェックリストユーザーへのキャンセル通知
-- 購入履歴から受け取り評価
-- 出品者評価の星表示
-- マイページの残高・売上・利用額・評価サマリー
+`internal/repository/` はDBアクセスを担当します。
+取引処理では、残高更新、商品ステータス更新、通知作成を一つのトランザクションで扱い、途中失敗時の不整合を減らしています。
 
-## 5. AI活用価値
+### Handler層
 
-単なる商品説明生成だけではなく、次の機能で「次世代フリマアプリ」らしさを出しています。
+`internal/handler/handler.go` はHTTPリクエストを受け取り、入力検証、Repository呼び出し、レスポンス生成を担当します。
+自然言語検索、AI説明生成、商品質問応答、購入前分析など、画面に近い処理もここから呼び出します。
 
-- 購入前AIチェック
-- 商品説明から不安点を抽出
-- 購入者が質問すべき項目を提示
-- 出品文・カテゴリ・状態の不整合を検出
-- 類似商品価格から価格妥当性を推定
-- MerRecを想定したおすすめ欄
-- MerRec streaming 分析スクリプト
-- Python推論サーバー分離
+### AI層
 
-## 6. データベース設計上の注意
+`internal/ai/gemini.go` は外部AI呼び出しを隠蔽します。
+Gemini APIとVertex AIの差をハンドラ側に漏らさないためです。
+また、429や一時的な失敗に備えてリトライとフォールバックを組み込んでいます。
 
-`items.image_url` は互換性のため名前を維持していますが、中身は次の2形式に対応します。
+## 4. Vertex AI とフォールバック
 
-- 旧形式: 単一URL文字列
-- 新形式: JSON配列文字列
+Vertex AI は、モデル名や認証が正しくても 429 / ResourceExhausted が出ることがあります。
+Demo DayでAIボタンが完全停止すると見せ方に困るため、以下の設計にしています。
 
-例:
+1. 外部AIを呼ぶ。
+2. 成功したら外部AIの結果を返す。
+3. 失敗したらバックエンドログへ原因を出す。
+4. 画面にはローカル簡易生成の結果を返す。
 
-```json
-["data:image/svg+xml;base64,...", "data:image/svg+xml;base64,..."]
-```
+フォールバックは「外部AIを使っていないふり」をするものではなく、デモの安定性を上げるための保険です。
 
-フロントエンドの `parseImageUrls()` が両方を解釈します。
+## 5. MerRec分析
 
-## 7. 金額表記
+MerRecの実データは非常に大きいため、アプリ本体に直接同梱しません。
+`ml/` に分離し、Hugging Face streamingで必要件数だけ読む構成にしています。
 
-DB/API内部では過去実装との互換性のため `balance_coins` や `sales_coins` という名前を残しています。
-ただし、画面・通知などのユーザー向け表記はすべて `¥` に統一しています。
+アプリ本体の商品IDとMerRecの商品IDは対応していないため、画面上のおすすめはアプリDB内の商品から出します。
+一方で、MerRec分析は、C2C取引で近いカテゴリや行動遷移を学ぶための独立パイプラインとして示しています。
 
-## 8. 文字化け対策
+## 6. Demo Dayで強調できる独創性
 
-`001_init.sql` には `SET NAMES utf8mb4` を入れています。
-初期化時にも必ず以下のように `--default-character-set=utf8mb4` を付けます。
+- 自然言語で商品検索できる。
+- 出品文生成だけでなく、購入前の不安点までAIが整理する。
+- AIが使えないときもローカル生成で止まらない。
+- MerRecによるC2C行動データ分析の拡張余地がある。
+- 複数画像、通知、DM、評価、ブロックなど、実際のフリマに近い流れがある。
 
-```bash
-mysql --default-character-set=utf8mb4 -uhackathon_user hackathon < 001_init.sql
-```
+## 7. コードコメント方針
 
-既に文字化けしたDBはフロント側では直せないので、`docker compose down -v` でvolumeを消してから再投入してください。
+主要なファイルには、次の観点でコメントを追加しています。
 
----
+- そのファイルが何を担当するか。
+- なぜその設計にしたか。
+- null対策、文字化け対策、AIフォールバックなど、バグになりやすい箇所の理由。
+- Demo Dayで説明しやすい発展機能の意図。
 
-## 2026-06-17 UI polish and natural language search
-
-### Responsibility separation
-
-Natural language search is implemented as a thin AI-to-filter conversion layer.
-
-- Frontend `ItemListPage.tsx`
-  - Owns the visual input box.
-  - Sends the natural sentence to `aiApi.parseSearch`.
-  - Applies the returned filter params to the existing sidebar state.
-  - Calls the existing `itemApi.list` endpoint.
-
-- Backend `ParseNaturalSearch`
-  - Receives a plain Japanese search sentence.
-  - Tries Vertex AI / Gemini first.
-  - Falls back to deterministic local parsing if the external AI fails.
-  - Returns the same shape as the existing search query params.
-
-This avoids creating a second search implementation. The existing `ItemRepository.List` and `BuildFilterFromQuery` remain the single source of truth for item filtering.
-
-### Fallback strategy
-
-External LLM calls are useful for ambiguous expressions such as:
-
-- 「使用感が少なくてきれい」
-- 「予算1万円以内」
-- 「安い順」
-- 「明日までに発送」
-
-However, Vertex AI can return 429 during demos. To keep the UX stable, the handler always returns a valid filter object. When the external call fails, the local parser handles common Japanese expressions for budget, condition, category, sort order, and shipping speed.
-
-### UI strategy
-
-The product listing page now has three clear zones:
-
-1. Left sidebar search.
-2. Hero + natural language search.
-3. Highlighted recommendation strip + compact product grid.
-
-This keeps the Amazon/Mercari-like density while giving the AI feature a visible, demo-friendly location.
+すべてを1行ごとに過剰に説明すると逆に読みにくくなるため、処理のまとまりごとに、実装意図が追えるコメントを多めに入れています。
