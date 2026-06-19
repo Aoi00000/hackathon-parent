@@ -1,48 +1,142 @@
 # AI Flea Market アーキテクチャ整理
 
-このドキュメントは、Demo Day とコードレビューで説明しやすいように、アプリ全体の責務分担を整理したものです。
+このドキュメントは、AI Flea Market を完成物として説明するためのアーキテクチャメモです。評価項目である「拡張性・保守性」「コード品質」「完成度」「AI活用価値」を説明できるように、画面、API、DB、AI、ML分析の責務を整理しています。
 
-## 全体構成
+## 1. 全体構成
 
 ```text
 hackathon-parent/
 ├── docker-compose.local.yml      # ローカルMySQL
-├── hackathon-backend/            # Go APIサーバー
-├── hackathon-frontend/           # React + TypeScript UI
-├── ml/                           # MerRec分析・推論サーバー
-├── README.md                     # 実行方法・機能一覧
-└── IMPLEMENTATION_NOTES.md       # 実装意図・設計メモ
+├── hackathon-backend/            # Go APIサーバー。認証、DB更新、AI呼び出し、通知、取引整合性を担当
+├── hackathon-frontend/           # React + TypeScript UI。画面表示、フォーム状態、メディアD&D、チャットUIを担当
+├── ml/                           # MerRec分析・推論サーバー。Web本体とは分離
+├── docs/                         # アーキテクチャ・デモ台本
+├── README.md                     # 完成物の機能一覧と実行手順
+├── IMPLEMENTATION_NOTES.md       # 実装意図・保守メモ
+├── hackathon_db_api_design.xlsx  # DB/API/UI仕様書
+└── hackathon_ui_ux_design.drawio # 画面遷移・ワイヤーフレーム
 ```
 
-## 責務分離
+## 2. レイヤーごとの責務
 
 ### フロントエンド
 
-- 画面表示、フォーム状態、画像プレビュー、自然言語検索UIを担当します。
-- API呼び出しは `src/api/client.ts` に集約しています。
-- 日付、金額、画像URL処理などの共通処理は `src/utils.ts` にまとめています。
-- 英語切り替えは要件から外したため、`i18n.tsx` は日本語固定の互換レイヤーとして残しています。
+- `src/pages/*` が画面単位のUIを担当する。
+- `src/api/client.ts` がAPI呼び出しを一元管理する。
+- `src/types.ts` がGoのJSONレスポンスと対応するTypeScript型を定義する。
+- `src/utils.ts` がメディアURL配列、日付、金額、評価表示などの共通処理を担当する。
+- `src/imageUpload.ts` が画像圧縮と動画サイズ確認を担当する。
+- `src/components/ImageReorderGrid.tsx` が複数画像・動画の追加、削除、ドラッグ&ドロップ並び替えを担当する。
+- 英語切替は最終仕様から外しており、`i18n.tsx` と `TranslatedText.tsx` は日本語固定の互換レイヤーとして残している。
 
 ### バックエンド
 
-- HTTPハンドラは `internal/handler/handler.go` に集約しています。
-- DBアクセスは `internal/repository/` に分離しています。
-- AI呼び出しは `internal/ai/gemini.go` に分離し、Gemini API / Vertex AI / ローカルフォールバックの切り替えを一箇所で扱います。
-- 認証は `internal/auth/`、設定は `internal/config/`、DB接続は `internal/db/` に分けています。
+- `cmd/server/main.go` は設定読み込み、DB接続、HTTPルーティング、CORS、販売改善通知の定期起動を担当する。
+- `internal/handler/handler.go` はHTTP入力検証、Repository呼び出し、AIプロンプト生成、JSONレスポンス生成を担当する。
+- `internal/repository/` はDBアクセスを担当する。
+- `internal/ai/gemini.go` はGemini API / Vertex AI / ローカルフォールバックを担当する。
+- `internal/auth/` はJWT認証を担当する。
+- `internal/config/` は環境変数読み込みを担当する。
 
-### ML / MerRec
+### DB
 
-- `ml/merrec_recommender.py` は MerRec を Hugging Face streaming またはローカルファイルから読み、推薦モデルを作成します。
-- `ml/merrec_model.py` は pickle の `__main__` 問題を避けるための共有モデル定義です。
-- `ml/recommender_service.py` は作成済みモデルをHTTP APIとして試すための軽量サーバーです。
+- `users` は残高、売上、住所、評価、取引実績を持つ。
+- `items` は商品情報と複数画像・動画JSON文字列を持つ。
+- `purchases` は購入、発送、受け取り評価、取引完了を管理する。
+- `messages` は公開コメントと返信スレッドを管理する。
+- `private_messages` は非公開DMと返信スレッドを管理する。
+- `notifications` は購入、発送、評価、支払い方法登録、商品更新、販売改善提案などの通知を管理する。
+- `payment_methods` はチャージ用支払い方法を管理する。
+- `ai_chat_threads` と `ai_chat_messages` はAI対話ページの話題別履歴を管理する。
 
-## AI機能の方針
+## 3. 主要な設計ポイント
 
-外部AIは便利ですが、Demo Dayではクォータ不足や429が起こる可能性があります。そのため、以下の方針にしています。
+### 3.1 複数画像・動画の扱い
 
-1. まず Vertex AI / Gemini を呼ぶ。
-2. 成功すれば外部AIの結果を使う。
-3. 失敗時はローカル簡易生成にフォールバックする。
-4. フォールバック理由はバックエンドログに残し、UI上でも必要な注意文だけ表示する。
+DB列名は既存実装との互換性を保つため `items.image_url` のままにしている。ただし中身は単一URL、旧画像URL、JSON配列のどれでも読めるようにしている。フロント側では `parseImageUrls()` と `stringifyImageUrls()` に変換処理を集約し、画面ごとに分岐を書かない設計にしている。
 
-この構成により、AI利用枠が不安定でも、デモ中に画面が止まらないようにしています。
+動画はData URLとして保存できるが、サイズ上限を設けている。ハッカソンデモではCloud Storage設定なしで完結できる一方、本番運用ではCloud Storageへアップロードし、DBにはURLを保存する構成へ置き換えやすい。
+
+### 3.2 AI対話スレッド
+
+AI対話ページは、DBに保存されるスレッド形式である。ユーザーは「休日の遊び」「模様替え」「勉強集中」など、話題ごとにスレッドを分けて履歴を残せる。
+
+処理の流れは次の通りである。
+
+1. フロントエンドが `GET /api/me/ai-chat-threads` でスレッド一覧を取得する。
+2. スレッドを選ぶと `GET /api/me/ai-chat-threads/{id}/messages` で履歴を取得する。
+3. 送信時は `POST /api/me/ai-chat-threads/{id}/messages` へユーザー発言を送る。
+4. バックエンドがユーザー発言を保存する。
+5. 直近履歴を含めたプロンプトでGemini / Vertex AIを呼ぶ。
+6. 外部AIが失敗した場合はローカルフォールバック回答を作る。
+7. AI回答もDBに保存し、ユーザー発言とAI回答の2件をまとめて返す。
+
+この設計により、AIの活用価値が「単発の商品説明生成」から「継続的な生活・購買相談」へ拡張されている。
+
+### 3.3 価格交渉アシスタント
+
+価格交渉はフリマ特有の摩擦が生じやすい場面である。商品詳細では、希望金額、商品情報、公開コメント、現在ユーザーの立場をプロンプトに含め、購入検討者向け・出品者向けに異なる文面を生成する。
+
+- 購入検討者には、失礼になりにくい値下げ依頼文を提示する。
+- 出品者には、承諾、代替案、丁寧なお断りのテンプレートを提示する。
+- 外部AIが失敗した場合も、ローカルテンプレートで最低限の交渉文を返す。
+
+### 3.4 エスクロー風の取引残高フロー
+
+購入時点では購入者の残高だけを減らす。出品者の残高と売上額は、購入者が受け取り評価を完了した時点で増やす。これにより、実際のフリマアプリに近い「商品到着確認後に売上確定」という流れになる。
+
+```text
+購入手続き完了
+  -> buyer.balance_coins -= price_yen
+  -> item.status = sold
+  -> purchase.status = paid
+  -> seller.balance_coins はまだ増えない
+
+発送通知
+  -> purchase.status = shipped
+  -> buyerへ受け取り評価依頼通知
+
+受け取り評価完了
+  -> purchase.status = completed
+  -> seller.balance_coins += price_yen
+  -> seller.sales_coins += price_yen
+  -> seller.rating_sum / rating_count / transaction_count 更新
+```
+
+### 3.5 販売改善通知
+
+バックエンド起動時と24時間ごとに、7日以上更新されていない販売中商品を確認する。同じ商品へ同内容の通知を連続送信しないよう、直近7日以内の `AI販売改善提案` 通知を見て重複を防いでいる。
+
+通知本文には、カテゴリ別に追記すべきサイズ・状態情報、検索に効きやすいキーワード、同カテゴリの完了取引価格を参考にした価格調整案を含める。これにより、MerRecの「過去取引傾向を販売改善へ使う」という発展性を、Web本体の通知UXへ接続している。
+
+### 3.6 履歴系ページの2列レイアウト
+
+出品履歴、購入履歴、チェックリストは、画面幅を広く使い、状態別に左右2列へ分けている。検索対象は全件のままにし、表示段階で状態別に分けることで、検索機能と一覧性を両立している。
+
+- 出品履歴: 左にAvailableを古い順、右にSOLDを新しい順。
+- 購入履歴: 左に未完了取引を古い順、右に完了取引を新しい順。
+- チェックリスト: 左にAvailableを古い順、右にSOLDを新しい順。
+
+## 4. 評価項目との対応
+
+### 技術・実装
+
+- Repository層を分け、DB処理の責務を明確化した。
+- 複数テーブルを更新する購入、受け取り評価、出品キャンセル、支払い方法変更はトランザクションで扱う。
+- AI呼び出しは `internal/ai` に集約し、外部AI失敗時もUIが止まらない。
+- 画像・動画の変換処理を共通化し、出品画面と編集画面で同じUIを使う。
+
+### 完成度・UX
+
+- 出品、購入、発送、受け取り評価、通知、残高反映まで一連の取引がつながっている。
+- 履歴ページを左右2列化し、取引状態を直感的に把握できるようにした。
+- 複数画像・動画のドラッグ&ドロップ並び替えにより、出品体験が自然になった。
+- 月別収支グラフにより、売上と利用額の動向を視覚的に把握できる。
+- 支払い方法未登録時はチャージを止め、登録欄へ誘導する。
+
+### テーマ性・独創性
+
+- 自然言語検索、購入前AIチェック、商品Q&A、AI対話スレッド、価格交渉アシスタント、販売改善通知により、AIの使いどころを複数用意した。
+- AIを単なる文章生成ではなく、検索、安心感、交渉摩擦低減、売れ残り改善に接続した。
+- MerRec分析をWeb本体から分離しつつ、C2Cマーケットプレイス分析の発展性を示した。
+- 取引フロー、通知、評価、ブロック、支払い方法を組み合わせ、実運用に近い次世代フリマ体験を作った。
