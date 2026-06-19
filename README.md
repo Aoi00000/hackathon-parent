@@ -388,6 +388,14 @@ python ml/merrec_recommender.py \
   --topk 30
 ```
 
+サーバーは以下のとおりです。
+
+```bash
+python ml/recommender_service.py \
+  --model ml/merrec_model.pkl \
+  --port 8090
+```
+
 ---
 
 ## 7. 本番環境テスト 
