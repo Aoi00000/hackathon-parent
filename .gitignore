@@ -34,7 +34,8 @@ data/
 
 # ===== Design documents =====
 # Ignore arbitrary Excel/drawio working copies.
-*.xlsx
+
+# *.xlsx
 *.drawio
 
 *.log
