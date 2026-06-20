@@ -54,38 +54,135 @@ Go バックエンド、React フロントエンド、MySQL、Gemini / Vertex AI
 
 ```text
 hackathon-parent/
-├── .gitignore                         # 親リポジトリ全体の除外設定
-├── docker-compose.local.yml           # ローカルMySQL起動用Compose
-├── hackathon_ui_ux_design.drawio      # 画面遷移・ワイヤーフレーム設計
-├── hackathon_db_api_design.xlsx       # DB/API/UI/タスク設計仕様書
-├── README.md                          # 完成物の概要、機能一覧、実行手順
-├── IMPLEMENTATION_NOTES.md            # 実装意図・保守メモ
-├── DEPLOY_GCP.md                      # GCPデプロイ手順
+├── .gitignore                                      # 親リポジトリ全体の除外設定
+├── .gitmodules                                     # フロントエンド・バックエンドをサブモジュール管理する場合の設定
+├── DEPLOY_GCP.md                                   # GCP / Vercel / Cloud Run / Cloud SQL へのデプロイ手順
+├── IMPLEMENTATION_NOTES.md                         # 実装意図、設計判断、保守時の注意点
+├── README.md                                       # 完成物の概要、機能一覧、ローカル実行手順、デモ手順
+├── docker-compose.local.yml                        # ローカル開発用MySQLを起動するDocker Compose設定
+├── hackathon_db_api_design.xlsx                    # DB/API/UI/タスク設計仕様書
+│
 ├── docs/
-│   ├── ARCHITECTURE.md                # アーキテクチャ整理
-│   └── DEMO_SCRIPT.md                 # Demo Day 用の見せ方
+│   ├── ARCHITECTURE.md                             # 全体アーキテクチャ、責務分離、処理フローの整理
+│   ├── DEMO_SCRIPT.md                              # Demo Dayでの説明順、見せ場、操作手順
+│   ├── ER_dbml.pdf                                 # dbdiagram.io / DBML からPDFエクスポートしたER図
+│   ├── er_diagram.dbml                             # dbdiagram.io 用ER定義
+│   ├── er_diagram.drawio                           # draw.io形式のER図
+│   ├── hackathon_ui_ux_design.drawio               # 総合UI/UX設計図面
+│   ├── screen_transition.drawio                    # 画面遷移図
+│   └── wireframe.drawio                            # 主要画面のワイヤーフレーム
+│
 ├── hackathon-backend/
-│   ├── cmd/server/main.go             # Go APIサーバー起動点、ルーティング、定期通知生成
-│   ├── internal/ai/gemini.go          # Gemini / Vertex AI / ローカルフォールバック
-│   ├── internal/auth/                 # JWT認証
-│   ├── internal/config/               # 環境変数読み込み
-│   ├── internal/db/                   # MySQL接続
-│   ├── internal/handler/handler.go    # HTTPハンドラ、入力検証、JSONレスポンス
-│   ├── internal/models/models.go      # API/DB共有モデル
-│   ├── internal/repository/           # DBアクセス層
-│   └── migrations/001_init.sql        # 初期DBスキーマとデモデータ
+│   ├── .env                                        # ローカル開発用のバックエンド環境変数
+│   ├── .env.example                                # バックエンド環境変数の記入例
+│   ├── .git                                        # サブモジュール参照情報、またはGit管理情報
+│   ├── .gitignore                                  # バックエンド側の除外設定
+│   ├── Dockerfile                                  # Cloud Run向けGo APIコンテナ定義
+│   ├── Makefile                                    # よく使うGoコマンドの補助
+│   ├── README.md                                   # バックエンド単体の説明
+│   ├── go.mod                                      # Goモジュール定義
+│   ├── go.sum                                      # Go依存関係のチェックサム
+│   │
+│   ├── cmd/
+│   │   └── server/
+│   │       └── main.go                             # APIサーバー起動点、ルーティング、CORS、定期AI販売改善通知
+│   │
+│   ├── internal/
+│   │   ├── ai/
+│   │   │   └── gemini.go                           # Gemini / Vertex AI / ローカルフォールバックによるAI応答生成
+│   │   │
+│   │   ├── auth/
+│   │   │   └── jwt.go                              # JWT生成、JWT検証、認証ミドルウェア
+│   │   │
+│   │   ├── config/
+│   │   │   └── config.go                           # DB接続情報、AI設定、CORS設定などの環境変数読み込み
+│   │   │
+│   │   ├── db/
+│   │   │   └── db.go                               # MySQL接続、接続プール設定、疎通確認
+│   │   │
+│   │   ├── handler/
+│   │   │   └── handler.go                          # HTTPハンドラ、入力検証、認証ユーザー取得、JSONレスポンス
+│   │   │
+│   │   ├── httpx/
+│   │   │   └── json.go                             # JSONエラー応答・成功応答の共通ユーティリティ
+│   │   │
+│   │   ├── models/
+│   │   │   └── models.go                           # APIリクエスト/レスポンス、DB取得結果、共有モデル定義
+│   │   │
+│   │   └── repository/
+│   │       ├── ai_chat_repository.go               # AI対話スレッド・AI対話メッセージのDB永続化
+│   │       ├── item_repository.go                  # 商品、購入、出品履歴、購入履歴、チェックリスト、販売改善通知のDB処理
+│   │       ├── message_repository.go               # 公開コメント、非公開DM、コメント削除のDB処理
+│   │       └── user_repository.go                  # ユーザー、残高、売上、支払い方法、通知、評価のDB処理
+│   │
+│   └── migrations/
+│       └── 001_init.sql                            # 初期DBスキーマ、外部キー、インデックス、デモユーザー、デモ商品
+│
 ├── hackathon-frontend/
-│   ├── src/App.tsx                    # 画面ルーティングとヘッダー
-│   ├── src/api/client.ts              # APIクライアント
-│   ├── src/components/                # 共通コンポーネント
-│   ├── src/pages/                     # 各ページ
-│   ├── src/styles.css                 # 全体スタイル
-│   └── src/types.ts                   # TypeScript型
+│   ├── .env                                        # ローカル開発用フロントエンド環境変数
+│   ├── .env.example                                # フロントエンド環境変数の記入例
+│   ├── .git                                        # サブモジュール参照情報、またはGit管理情報
+│   ├── .gitignore                                  # フロントエンド側の除外設定
+│   ├── Dockerfile                                  # フロントエンド配信用コンテナ定義
+│   ├── README.md                                   # フロントエンド単体の説明
+│   ├── cloudbuild.frontend.yaml                    # Cloud Buildでフロントエンドをビルドする設定
+│   ├── index.html                                  # ViteアプリのHTMLエントリ
+│   ├── nginx.conf                                  # コンテナ配信時のNginx設定
+│   ├── package-lock.json                           # npm依存関係の固定
+│   ├── package.json                                # npm scripts、React/Vite/TypeScript依存関係
+│   ├── tsconfig.app.json                           # アプリ本体向けTypeScript設定
+│   ├── tsconfig.json                               # TypeScriptプロジェクト参照設定
+│   ├── tsconfig.node.json                          # Vite設定ファイル向けTypeScript設定
+│   ├── tsconfig.tsbuildinfo                        # TypeScript増分ビルド情報
+│   ├── vite.config.ts                              # Viteビルド設定、開発サーバー設定
+│   │
+│   └── src/
+│       ├── App.tsx                                 # 画面ルーティング、ヘッダー、ログイン状態に応じたナビゲーション
+│       ├── ErrorBoundary.tsx                       # React実行時エラーを画面全体で受け止める安全装置
+│       ├── TranslatedText.tsx                      # 日本語固定表示の互換コンポーネント
+│       ├── formOptions.ts                          # カテゴリ、状態、配送方法など出品フォーム選択肢
+│       ├── i18n.tsx                                # 英語切替削除後も既存実装を壊さない日本語固定互換レイヤー
+│       ├── imageUpload.ts                          # 画像・動画アップロード、Data URL化、メディア種別判定
+│       ├── main.tsx                                # Reactアプリ起動点、DOMマウント処理
+│       ├── savedSearch.ts                          # 検索条件保存・復元用ユーティリティ
+│       ├── searchUtils.ts                          # 商品一覧、履歴、チェックリストで使う検索・絞り込み処理
+│       ├── styles.css                              # 全体スタイル、レスポンシブ、カード、2列履歴、AI対話、マイページ装飾
+│       ├── types.ts                                # フロントエンド全体で共有するTypeScript型定義
+│       ├── utils.ts                                # 日時、金額、JST表示、メディア配列、表示補助の共通処理
+│       ├── vite-env.d.ts                           # Vite用の型宣言
+│       │
+│       ├── api/
+│       │   └── client.ts                           # REST APIクライアント、認証ヘッダー付与、各API呼び出し関数
+│       │
+│       ├── components/
+│       │   └── ImageReorderGrid.tsx                # 画像・動画の追加、削除、ドラッグ&ドロップ並び替えUI
+│       │
+│       ├── context/
+│       │   └── AuthContext.tsx                     # ログイン状態、JWT、現在ユーザー、ログイン/ログアウト処理
+│       │
+│       └── pages/
+│           ├── AIChatPage.tsx                      # スレッド型AI対話ページ、話題リスト、会話履歴、AI応答表示
+│           ├── ChecklistPage.tsx                   # チェックリスト画面、Available/SOLDの2列表示、検索対応
+│           ├── CreateItemPage.tsx                  # 出品画面、商品情報入力、画像・動画アップロード、AI説明生成
+│           ├── ItemDetailPage.tsx                  # 商品詳細、購入導線、公開コメント、価格交渉AI、非公開DM
+│           ├── ItemListPage.tsx                    # 商品一覧、検索、検索条件保存、AIおすすめ、自然言語検索
+│           ├── LoginPage.tsx                       # ログイン画面
+│           ├── MyItemsPage.tsx                     # 出品履歴、Available/SOLDの2列表示、商品編集導線
+│           ├── MyPage.tsx                          # マイページ、残高、売上/利用額、月別グラフ、支払い方法登録
+│           ├── NotificationsPage.tsx               # 通知一覧、既読管理、販売改善通知、取引通知、支払い方法通知
+│           ├── PurchaseFlowPage.tsx                # 購入手続き、残高確認、支払い方法確認、購入確定
+│           ├── PurchaseHistoryPage.tsx             # 購入履歴、未完了/取引完了の2列表示、受け取り評価導線
+│           └── RegisterPage.tsx                    # 新規登録画面
+│
 └── ml/
-    ├── merrec_recommender.py          # MerRec学習/分析
-    ├── recommender_service.py         # 軽量推薦API
-    ├── sample_merrec.csv              # サンプルデータ
-    └── README.md                      # ML側説明
+    ├── README.md                                   # ML側の概要、MerRec分析、推薦APIの説明
+    ├── merrec_artifact.json                        # MerRec分析結果・推薦用成果物JSON
+    ├── merrec_model.pkl                            # 学習済み推薦モデルのpickleファイル
+    ├── merrec_model.py                             # MerRec由来データの前処理、特徴量化、モデル部品
+    ├── merrec_recommender.py                       # MerRec学習/分析、TF-IDF、SVD、近傍探索、推薦生成
+    ├── recommender_service.py                      # 軽量推薦API、商品推薦・販売改善提案の補助
+    ├── requirements.txt                            # ML側Python依存関係
+    └── sample_merrec.csv                           # 推薦処理確認用のサンプルMerRecデータ
 ```
 
 ---
