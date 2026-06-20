@@ -36,6 +36,6 @@ data/
 # Ignore arbitrary Excel/drawio working copies.
 
 # *.xlsx
-*.drawio
+# *.drawio
 
 *.log

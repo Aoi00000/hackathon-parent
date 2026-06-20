@@ -1,0 +1,144 @@
+<mxfile host="app.diagrams.net" modified="2026-06-19T15:20:00.000000Z" agent="ChatGPT" version="24.7.5">
+  <diagram id="screen-flow" name="画面遷移図">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <mxCell id="s1" value="未ログイン
+トップ/商品一覧
+検索・商品カード" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="180" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="s2" value="新規登録
+name/email/password" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="310" y="20" width="180" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" value="ログイン
+email/password" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="310" y="130" width="180" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="s4" value="商品詳細
+画像・動画カルーセル
+購入前AI/価格交渉
+公開コメント/DM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="210" width="190" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="s5" value="出品画面
+画像・動画D&D
+AI説明生成" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="310" y="280" width="180" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="s6" value="購入フロー
+購入時は購入者残高減
+受け取り評価で出品者入金" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="590" y="210" width="180" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="s7" value="コメント/DM
+公開スレッド
+非公開DM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="590" y="340" width="180" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s9" value="AI対話ページ
+左:話題リスト
+右:選択中の会話
+履歴DB保存" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="40" y="470" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="s10" value="マイページ
+残高/収支グラフ
+支払い方法/通知" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="590" y="470" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="s8" value="Cloud Run API
+Go + MySQL + Gemini
+価格交渉/販売改善通知
+取引整合性" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="320" y="470" width="240" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" value="登録" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="s1" target="s2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="ログイン" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="s1" target="s3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="商品クリック" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="s1" target="s4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="成功" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="s3" target="s1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="成功" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="s2" target="s1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="出品する" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="s1" target="s5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="購入する" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="s4" target="s6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="出品者に質問" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="s4" target="s7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" value="POST /api/items" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="s5" target="s8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" value="GET/POST API" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="s4" target="s8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" value="AI対話" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="s1" target="s9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" value="GET/POST thread API" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="s9" target="s8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" value="マイページ" style="endArrow=block;html=1;rounded=0;strokeWidth=2;" edge="1" parent="1" source="s1" target="s10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="wireframe" name="主要ワイヤーフレーム">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <mxCell id="w1" value="Header
+ロゴ / 商品一覧 / 出品 / ログイン状態" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="720" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="w2" value="商品一覧画面
+サイドバー検索
+自然言語検索
+おすすめ商品" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="120" width="220" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="w3" value="商品詳細画面
+画像・動画カルーセル
+購入前AIチェック
+価格交渉AI
+コメント/DM
+購入ボタン" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="300" y="120" width="220" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="w4" value="出品画面
+必須項目
+画像・動画D&D
+AI生成ボタン
+出品ボタン" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="560" y="120" width="220" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="w5" value="UX方針
+1. 基本取引を安定させる
+2. AIは説明生成・購入前チェック・自然言語検索・対話相談・価格交渉・販売改善へ広げる
+3. 履歴ページは全幅2列で状態別に見やすくする
+4. 支払い/通知/評価/ブロックまで実取引に近づける
+5. デモでは出品→AI対話→価格交渉→購入→発送→評価→売上反映を見せる" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="40" y="410" width="740" height="150" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

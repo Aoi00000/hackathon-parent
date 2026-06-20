@@ -1,0 +1,161 @@
+// dbdiagram.io 用 ER 図定義
+// 既存の migrations/001_init.sql と対応する主要テーブル・主要列・外部キーを整理しています。
+
+Table users {
+  id bigint [pk, increment]
+  name varchar
+  email varchar [unique]
+  password_hash varchar
+  balance_coins int
+  sales_coins int
+  rating_sum int
+  rating_count int
+  transaction_count int
+  shipping_region varchar
+  shipping_address text
+  created_at datetime
+}
+
+Table items {
+  id bigint [pk, increment]
+  product_code varchar [unique]
+  seller_id bigint [not null]
+  title varchar
+  description text
+  category varchar
+  condition_text varchar
+  price_yen int
+  image_url text [note: '画像・動画メディア配列をJSON文字列として保持']
+  status varchar
+  updated_at datetime
+}
+
+Table purchases {
+  id bigint [pk, increment]
+  item_id bigint [unique, not null]
+  buyer_id bigint [not null]
+  seller_id bigint [not null]
+  price_yen int
+  status varchar [note: 'paid / shipped / completed / canceled']
+  delivery_address text
+  shipped_at datetime
+  completed_at datetime
+  rating int
+  rating_comment text
+  created_at datetime
+}
+
+Table messages {
+  id bigint [pk, increment]
+  item_id bigint [not null]
+  parent_message_id bigint
+  sender_id bigint [not null]
+  receiver_id bigint [not null]
+  body text
+  created_at datetime
+}
+
+Table private_messages {
+  id bigint [pk, increment]
+  item_id bigint [not null]
+  parent_private_message_id bigint
+  sender_id bigint [not null]
+  receiver_id bigint [not null]
+  body text
+  created_at datetime
+}
+
+Table checklist {
+  id bigint [pk, increment]
+  user_id bigint [not null]
+  item_id bigint [not null]
+  last_seen_updated_at datetime
+  created_at datetime
+}
+
+Table notifications {
+  id bigint [pk, increment]
+  user_id bigint [not null]
+  item_id bigint
+  title varchar
+  body text
+  read_at datetime
+  created_at datetime
+}
+
+Table saved_searches {
+  id bigint [pk, increment]
+  user_id bigint [not null]
+  name varchar
+  query_json text
+  created_at datetime
+}
+
+Table blocked_users {
+  id bigint [pk, increment]
+  blocker_id bigint [not null]
+  blocked_id bigint [not null]
+  created_at datetime
+}
+
+Table support_messages {
+  id bigint [pk, increment]
+  user_id bigint [not null]
+  subject varchar
+  body text
+  created_at datetime
+}
+
+Table payment_methods {
+  id bigint [pk, increment]
+  user_id bigint [not null]
+  label varchar
+  card_last4 char
+  holder_name varchar
+  expiry_month tinyint
+  expiry_year smallint
+  is_default boolean
+  created_at datetime
+}
+
+Table ai_chat_threads {
+  id bigint [pk, increment]
+  user_id bigint [not null]
+  title varchar
+  created_at datetime
+  updated_at datetime
+}
+
+Table ai_chat_messages {
+  id bigint [pk, increment]
+  thread_id bigint [not null]
+  role varchar
+  body text
+  notice text
+  used_fallback boolean
+  created_at datetime
+}
+
+Ref: items.seller_id > users.id
+Ref: purchases.item_id > items.id
+Ref: purchases.buyer_id > users.id
+Ref: purchases.seller_id > users.id
+Ref: messages.item_id > items.id
+Ref: messages.parent_message_id > messages.id
+Ref: messages.sender_id > users.id
+Ref: messages.receiver_id > users.id
+Ref: private_messages.item_id > items.id
+Ref: private_messages.parent_private_message_id > private_messages.id
+Ref: private_messages.sender_id > users.id
+Ref: private_messages.receiver_id > users.id
+Ref: checklist.user_id > users.id
+Ref: checklist.item_id > items.id
+Ref: notifications.user_id > users.id
+Ref: notifications.item_id > items.id
+Ref: saved_searches.user_id > users.id
+Ref: blocked_users.blocker_id > users.id
+Ref: blocked_users.blocked_id > users.id
+Ref: support_messages.user_id > users.id
+Ref: payment_methods.user_id > users.id
+Ref: ai_chat_threads.user_id > users.id
+Ref: ai_chat_messages.thread_id > ai_chat_threads.id

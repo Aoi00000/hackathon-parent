@@ -1,11 +1,19 @@
-"""Shared MerRec model definitions and inference helpers.
+"""
+ファイル概要: ml/merrec_model.py
 
-This module is intentionally imported by both:
-- merrec_recommender.py, which trains and pickles MerRecModel
-- recommender_service.py, which unpickles and serves MerRecModel
+役割:
+MerRec学習結果を推論時に読み込めるよう、特徴量生成関数とモデル入れ物を定義します。
 
-Putting MerRecModel in this stable module avoids the common pickle error where a
-class saved as __main__.MerRecModel cannot be found when another script loads it.
+読み方の目安:
+1. 前半の定数とヘルパー関数で、データ列名の揺れや欠損値への耐性を確認します。
+2. 中盤では、テキスト特徴量、数値特徴量、カテゴリ特徴量を機械学習モデルへ渡す流れを確認します。
+3. 後半では、学習済み成果物の保存またはHTTP推論APIとしての公開方法を確認します。
+
+機械学習面の背景:
+MerRecのような行動ログでは、閲覧、いいね、購入開始、購入完了などのイベント強度が異なります。
+そのため、単純な文字列類似だけでなく、イベント重み、TF-IDF、次元削減、近傍探索を組み合わせることで、
+ハッカソンの短時間実装でも「フリマらしい推薦」を再現しやすくしています。
+
 """
 from __future__ import annotations
 
@@ -18,12 +26,12 @@ from scipy import sparse
 
 
 @dataclass
+# 【詳細コメント】このクラスは、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 class MerRecModel:
-    """Pickle-safe container for the MerRec recommendation model.
+    """MerRec推薦モデルをpickleで安全に保存・読み込みするための入れ物です。
 
-    The class lives in merrec_model.py, not in __main__.  Therefore a pickle made
-    by merrec_recommender.py can be loaded by recommender_service.py as long as
-    both scripts can import this module.
+    学習スクリプトと推論サーバーの両方がこのクラスをimportすることで、
+    __main__配下に保存されたクラスを別スクリプトから読めないというpickle特有の問題を避けます。
     """
 
     version: int
@@ -37,8 +45,9 @@ class MerRecModel:
     artifact: dict[str, Any]
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def safe_float(value: Any, default: float = 0.0) -> float:
-    """Convert a value such as price to float safely."""
+    """価格などの値を、欠損や文字列混入に耐えながらfloatへ変換します。"""
     if value is None:
         return default
     if isinstance(value, (int, float)):
@@ -52,8 +61,9 @@ def safe_float(value: Any, default: float = 0.0) -> float:
         return default
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def price_bucket(price: float) -> str:
-    """Coarse price bucket used as a text token during training/inference."""
+    """価格帯を粗く分類し、学習・推論時にテキスト特徴量の1トークンとして使います。"""
     if price <= 0:
         return "price_unknown"
     if price < 10:
@@ -69,6 +79,7 @@ def price_bucket(price: float) -> str:
     return "price_over_1000"
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def build_feature_text(
     title: Any = "",
     category: Any = "",
@@ -77,7 +88,7 @@ def build_feature_text(
     price: Any = 0,
     session_titles: list[Any] | None = None,
 ) -> str:
-    """Build a text feature in the same style for training and inference."""
+    """学習時と推論時で同じ規則になるよう、商品情報からテキスト特徴量を組み立てます。"""
     price_value = safe_float(price, 0.0)
     parts = [
         str(title or ""),
@@ -91,8 +102,9 @@ def build_feature_text(
     return " ".join(part for part in parts if part).strip() or "unknown item"
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def build_query_vector(model: MerRecModel, payload: dict[str, Any]) -> Any:
-    """Convert a request payload to the same vector space as trained items."""
+    """APIリクエストの内容を、学習済み商品と同じベクトル空間へ写像します。"""
     price = safe_float(payload.get("price"), 0.0)
     feature_text = build_feature_text(
         title=payload.get("title", ""),
@@ -110,8 +122,9 @@ def build_query_vector(model: MerRecModel, payload: dict[str, Any]) -> Any:
     return model.reducer.transform(x)
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def recommend_from_payload(model: MerRecModel, payload: dict[str, Any]) -> dict[str, Any]:
-    """Return related items for a title/category/brand/price query."""
+    """商品名・カテゴリ・ブランド・価格などの条件から関連商品を返します。"""
     if model.nn is None or not model.items:
         return {
             "reason": "推薦モデルに十分な商品がありません。",

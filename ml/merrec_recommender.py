@@ -1,15 +1,22 @@
 #!/usr/bin/env python3
-"""Build a MerRec-based recommendation artifact for the hackathon marketplace.
-
-This script supports two input modes:
-1. Hugging Face streaming mode
-   Reads mercari-us/merrec with streaming=True and stops after --limit rows.
-2. Local mode
-   Reads parquet/csv/jsonl/jsonl.gz files already placed on disk.
-
-The trained pickle stores merrec_model.MerRecModel, not __main__.MerRecModel.
-Therefore the inference server can load it cleanly from another script.
 """
+ファイル概要: ml/merrec_recommender.py
+
+役割:
+Mercari MerRecデータからTF-IDF/SVD/近傍探索/行動重み付けを学習し、推薦モデルを作成します。
+
+読み方の目安:
+1. 前半の定数とヘルパー関数で、データ列名の揺れや欠損値への耐性を確認します。
+2. 中盤では、テキスト特徴量、数値特徴量、カテゴリ特徴量を機械学習モデルへ渡す流れを確認します。
+3. 後半では、学習済み成果物の保存またはHTTP推論APIとしての公開方法を確認します。
+
+機械学習面の背景:
+MerRecのような行動ログでは、閲覧、いいね、購入開始、購入完了などのイベント強度が異なります。
+そのため、単純な文字列類似だけでなく、イベント重み、TF-IDF、次元削減、近傍探索を組み合わせることで、
+ハッカソンの短時間実装でも「フリマらしい推薦」を再現しやすくしています。
+
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -34,10 +41,11 @@ from merrec_model import MerRecModel, build_feature_text, safe_float
 
 try:
     import implicit  # type: ignore
-except Exception:  # pragma: no cover - optional dependency
+except Exception:  # pragma: no cover - 外部環境依存なのでテスト対象外 - 任意依存なのでテスト対象外
     implicit = None
 
 
+# 【定数】この値は学習・推論の挙動を揃えるための設定です。重みや列名を変えると推薦結果の傾向も変わります。
 EVENT_WEIGHTS = {
     "item_view": 1.0,
     "view": 1.0,
@@ -54,6 +62,7 @@ EVENT_WEIGHTS = {
 }
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def first_existing(df: pd.DataFrame, candidates: list[str]) -> str | None:
     for name in candidates:
         if name in df.columns:
@@ -61,6 +70,7 @@ def first_existing(df: pd.DataFrame, candidates: list[str]) -> str | None:
     return None
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def read_jsonl(path: Path, limit: int | None) -> pd.DataFrame:
     rows: list[dict[str, Any]] = []
     opener = gzip.open if path.suffix == ".gz" else open
@@ -74,8 +84,9 @@ def read_jsonl(path: Path, limit: int | None) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def read_table(path: Path, limit: int | None) -> pd.DataFrame:
-    """Read local parquet/csv/jsonl/jsonl.gz data."""
+    """ローカルに置いた parquet/csv/jsonl/jsonl.gz 形式のデータを読み込みます。"""
     if path.is_dir():
         files: list[Path] = []
         for pattern in ("*.parquet", "*.csv", "*.jsonl", "*.jsonl.gz"):
@@ -107,11 +118,12 @@ def read_table(path: Path, limit: int | None) -> pd.DataFrame:
     raise ValueError(f"Unsupported input: {path}")
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def read_hf_streaming(dataset_name: str, split: str, limit: int, config: str | None = None) -> pd.DataFrame:
-    """Read MerRec from Hugging Face with streaming=True."""
+    """Hugging Face上のMerRecデータをstreaming=Trueで少しずつ読み込みます。"""
     try:
         from datasets import load_dataset  # type: ignore
-    except ImportError as exc:  # pragma: no cover
+    except ImportError as exc:  # pragma: no cover - 外部環境依存なのでテスト対象外
         raise SystemExit("datasets が必要です。pip install datasets を実行してください。") from exc
 
     kwargs: dict[str, Any] = {"split": split, "streaming": True}
@@ -127,16 +139,19 @@ def read_hf_streaming(dataset_name: str, split: str, limit: int, config: str | N
     return pd.DataFrame(rows)
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def normalize_event(value: Any) -> str:
     return str(value or "item_view").strip().lower().replace("-", "_").replace(" ", "_")
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def event_weight(value: Any) -> float:
     return EVENT_WEIGHTS.get(normalize_event(value), 1.0)
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def normalize_items(raw: pd.DataFrame) -> pd.DataFrame:
-    """Map MerRec/raw columns to common event columns."""
+    """MerRecなどの元データ列名を、共通イベント列へ対応付けます。"""
     id_col = first_existing(raw, ["item_id", "product_id", "id", "listing_id"])
     title_col = first_existing(raw, ["title", "item_title", "name", "item_name", "product_name"])
     price_col = first_existing(raw, ["price", "item_price", "price_yen", "listing_price"])
@@ -180,8 +195,9 @@ def normalize_items(raw: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def build_item_table(events: pd.DataFrame) -> pd.DataFrame:
-    """Aggregate event rows to item-level training rows."""
+    """イベント単位の行を商品単位に集約し、学習に使いやすい表へ変換します。"""
     item = (
         events.sort_values("timestamp", na_position="last")
         .groupby("item_id", as_index=False)
@@ -211,8 +227,9 @@ def build_item_table(events: pd.DataFrame) -> pd.DataFrame:
     return item
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def fit_content_model(item_table: pd.DataFrame, topk: int) -> tuple[TfidfVectorizer, StandardScaler, Any, NearestNeighbors, Any]:
-    """Fit TF-IDF + price + SVD/Normalizer + NearestNeighbors."""
+    """TF-IDF、価格特徴量、SVDによる次元削減、正規化、近傍探索モデルを学習します。"""
     min_df = 2 if len(item_table) >= 2000 else 1
     vectorizer = TfidfVectorizer(min_df=min_df, max_features=120_000, ngram_range=(1, 2), token_pattern=r"(?u)\b\w+\b")
     text_x = vectorizer.fit_transform(item_table["feature_text"].fillna(""))
@@ -231,8 +248,9 @@ def fit_content_model(item_table: pd.DataFrame, topk: int) -> tuple[TfidfVectori
     return vectorizer, price_scaler, reducer, nn, vectors
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def build_transitions(events: pd.DataFrame, topk: int) -> dict[str, list[dict[str, Any]]]:
-    """Count next-item transitions in each session."""
+    """セッション内で次に閲覧・購入されやすい商品の遷移回数を数えます。"""
     transitions: dict[str, Counter[str]] = defaultdict(Counter)
     if "session_id" not in events.columns or events["session_id"].eq("").all():
         return {}
@@ -252,6 +270,7 @@ def build_transitions(events: pd.DataFrame, topk: int) -> dict[str, list[dict[st
     }
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def default_insights(category: str) -> list[str]:
     c = category.lower()
     if any(k in c for k in ["book", "本", "教材", "参考書"]):
@@ -265,6 +284,7 @@ def default_insights(category: str) -> list[str]:
     return ["商品の状態が具体的か", "購入時期・使用回数", "付属品や欠品", "発送方法や梱包"]
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def build_category_insights(item_table: pd.DataFrame) -> dict[str, list[str]]:
     insights: dict[str, list[str]] = {}
     for category, group in item_table.groupby("category_0", dropna=True):
@@ -285,6 +305,7 @@ def build_category_insights(item_table: pd.DataFrame) -> dict[str, list[str]]:
     return insights
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def build_json_artifact(
     item_table: pd.DataFrame,
     vectors: Any,
@@ -333,6 +354,7 @@ def build_json_artifact(
     }
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def build_implicit_als(events: pd.DataFrame) -> Any | None:
     if implicit is None or events["user_id"].eq("").all():
         return None
@@ -345,6 +367,7 @@ def build_implicit_als(events: pd.DataFrame) -> Any | None:
     return {"model": model, "item_index": item_index.tolist(), "user_index": user_index.tolist(), "item_user_matrix": mat}
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build MerRec recommendation artifacts.")
     source = parser.add_mutually_exclusive_group(required=True)
@@ -366,6 +389,7 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
+# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 def main() -> None:
     args = parse_args()
     if args.hf:
@@ -426,5 +450,6 @@ def main() -> None:
     print("- pickle class: merrec_model.MerRecModel")
 
 
+# 【実行入口】このファイルを直接実行したときだけmain処理を走らせ、import時には副作用を起こさないようにします。
 if __name__ == "__main__":
     main()

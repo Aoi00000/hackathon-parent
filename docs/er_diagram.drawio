@@ -1,0 +1,97 @@
+<mxfile host="65bd71144e">
+    <diagram id="er_diagram" name="er_diagram">
+        <mxGraphModel dx="1924" dy="974" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="er-title" value="ER図 主要テーブルと外部キー関係" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#9333ea;fontSize=20;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="30" width="360" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-users" value="users PK id name/email balance/sales rating" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;fontSize=12;align=left;spacing=10;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="150" width="220" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-items" value="items PK id FK seller_id status/price/media" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;fontSize=12;align=left;spacing=10;" parent="1" vertex="1">
+                    <mxGeometry x="530" y="80" width="240" height="150" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-purchases" value="purchases PK id FK item_id/buyer_id/seller_id status/rating" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;fontSize=12;align=left;spacing=10;" parent="1" vertex="1">
+                    <mxGeometry x="890" y="200" width="270" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-messages" value="messages 公開コメント FK item/sender/receiver/parent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;fontSize=12;align=left;spacing=10;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="400" width="260" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-private" value="private_messages 非公開DM FK item/sender/receiver/parent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;fontSize=12;align=left;spacing=10;" parent="1" vertex="1">
+                    <mxGeometry x="580" y="570" width="260" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-check" value="checklist FK user_id/item_id UNIQUE user+item" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;fontSize=12;align=left;spacing=10;" parent="1" vertex="1">
+                    <mxGeometry x="940" y="560" width="230" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-notify" value="notifications FK user_id/item_id read_at" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;fontSize=12;align=left;spacing=10;" parent="1" vertex="1">
+                    <mxGeometry x="1220" y="530" width="230" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-pay" value="payment_methods FK user_id card_last4/default" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;fontSize=12;align=left;spacing=10;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="740" width="240" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-search" value="saved_searches FK user_id query_json" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;fontSize=12;align=left;spacing=10;" parent="1" vertex="1">
+                    <mxGeometry x="210" y="580" width="230" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-block" value="blocked_users FK blocker/blocked UNIQUE pair" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;fontSize=12;align=left;spacing=10;" parent="1" vertex="1">
+                    <mxGeometry x="490" y="740" width="240" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-support" value="support_messages FK user_id subject/body" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;fontSize=12;align=left;spacing=10;" parent="1" vertex="1">
+                    <mxGeometry x="970" y="730" width="240" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-thread" value="ai_chat_threads FK user_id title/updated_at" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;fontSize=12;align=left;spacing=10;" parent="1" vertex="1">
+                    <mxGeometry x="1320" y="50" width="240" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-chatmsg" value="ai_chat_messages FK thread_id role/body/fallback" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;fontSize=12;align=left;spacing=10;" parent="1" vertex="1">
+                    <mxGeometry x="1210" y="330" width="240" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-e1" value="1:N 出品" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="er-users" target="er-items" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-e2" value="1:0..1 購入" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="er-items" target="er-purchases" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-e3" value="buyer/seller" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="er-users" target="er-purchases" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-e4" value="1:N" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="er-items" target="er-messages" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-e5" value="1:N" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="er-items" target="er-private" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-e6" value="1:N" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="er-users" target="er-check" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-e7" value="1:N" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="er-items" target="er-check" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-e8" value="1:N" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="er-users" target="er-notify" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-e9" value="0..1:N" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="er-items" target="er-notify" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-e10" value="1:N" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="er-users" target="er-pay" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-e11" value="1:N" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="er-users" target="er-search" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-e12" value="blocker/blocked" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="er-users" target="er-block" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-e13" value="1:N" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="er-users" target="er-support" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-e14" value="1:N" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="er-users" target="er-thread" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="er-e15" value="1:N" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="er-thread" target="er-chatmsg" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
