@@ -1,41 +1,41 @@
 <mxfile host="65bd71144e">
     <diagram id="wireframe" name="wireframe">
-        <mxGraphModel dx="1749" dy="885" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+        <mxGraphModel dx="1603" dy="1165" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="wf-title" value="ワイヤーフレーム全体像 Regatear / AI Flea Market" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;fontSize=20;fontStyle=1;" parent="1" vertex="1">
+                <mxCell id="wf-title" value="ワイヤーフレーム全体像&lt;div&gt;Regatear / AI Flea Market&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;fontSize=20;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="40" y="30" width="360" height="70" as="geometry"/>
                 </mxCell>
-                <mxCell id="wf-list" value="商品一覧&amp;nbsp;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;左:検索条件 /&amp;nbsp;&lt;/div&gt;&lt;div&gt;中央:商品カード /&amp;nbsp;&lt;/div&gt;&lt;div&gt;上部:AIおすすめ&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=14;spacing=10;verticalAlign=top;" parent="1" vertex="1">
+                <mxCell id="wf-list" value="&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;商品一覧&amp;nbsp;&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=14;spacing=10;verticalAlign=top;labelPosition=center;verticalLabelPosition=bottom;align=center;" parent="1" vertex="1">
                     <mxGeometry x="40" y="140" width="300" height="210" as="geometry"/>
                 </mxCell>
-                <mxCell id="wf-detail" value="商品情報詳細&lt;div&gt;メディア / 商品情報 /&amp;nbsp;&lt;/div&gt;&lt;div&gt;公開コメント / 価格交渉AI / 非公開DM&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=14;spacing=10;verticalAlign=top;" parent="1" vertex="1">
-                    <mxGeometry x="380" y="140" width="360" height="210" as="geometry"/>
+                <mxCell id="wf-detail" value="商品情報詳細" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=14;spacing=10;verticalAlign=top;labelPosition=center;verticalLabelPosition=bottom;align=center;" parent="1" vertex="1">
+                    <mxGeometry x="430" y="90" width="360" height="500" as="geometry"/>
                 </mxCell>
-                <mxCell id="wf-create" value="出品・商品編集&lt;div&gt;必須項目 / AI説明生成 / 画像・動画並び替え&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=14;spacing=10;" parent="1" vertex="1">
+                <mxCell id="wf-create" value="出品・商品編集" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=14;spacing=10;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;" parent="1" vertex="1">
                     <mxGeometry x="850" y="140" width="330" height="210" as="geometry"/>
                 </mxCell>
-                <mxCell id="wf-chat" value="AI対話 左:話題リスト / 右:選択中スレッド" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=14;spacing=10;verticalAlign=top;" parent="1" vertex="1">
+                <mxCell id="wf-chat" value="AI対話" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=14;spacing=10;verticalAlign=top;labelPosition=center;verticalLabelPosition=bottom;align=center;" parent="1" vertex="1">
                     <mxGeometry x="1220" y="140" width="330" height="210" as="geometry"/>
                 </mxCell>
-                <mxCell id="wf-history" value="履歴系画面&lt;div&gt;出品履歴・購入履歴・チェックリストは2列で状態別表示&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=14;spacing=10;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="420" width="430" height="220" as="geometry"/>
+                <mxCell id="wf-history" value="履歴系画面&lt;div&gt;出品履歴・購入履歴・チェックリスト&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=14;spacing=10;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="10" y="610" width="430" height="220" as="geometry"/>
                 </mxCell>
-                <mxCell id="wf-mypage" value="マイページ&lt;div&gt;残高 / 支払い方法 / 月別売上・利用額 / 問い合わせ&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=14;spacing=10;" parent="1" vertex="1">
-                    <mxGeometry x="520" y="420" width="430" height="220" as="geometry"/>
+                <mxCell id="wf-mypage" value="マイページ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=14;spacing=10;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="990" y="430" width="430" height="550" as="geometry"/>
                 </mxCell>
                 <mxCell id="wf-notify" value="通知&lt;div&gt;購入・発送・受取評価・支払い方法・AI販売改善提案&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=14;spacing=10;" parent="1" vertex="1">
-                    <mxGeometry x="1070" y="420" width="430" height="220" as="geometry"/>
+                    <mxGeometry x="470" y="748" width="430" height="220" as="geometry"/>
                 </mxCell>
-                <mxCell id="wf-list-filter" value="検索条件 カテゴリ/価格/タグ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f1f5f9;strokeColor=#94a3b8;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="170" width="90" height="90" as="geometry"/>
+                <mxCell id="wf-list-filter" value="検索条件" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f1f5f9;strokeColor=#94a3b8;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="160" width="60" height="170" as="geometry"/>
                 </mxCell>
                 <mxCell id="wf-list-cards" value="商品カード一覧" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eff6ff;strokeColor=#60a5fa;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="150" y="250" width="140" height="90" as="geometry"/>
+                    <mxGeometry x="110" y="250" width="220" height="90" as="geometry"/>
                 </mxCell>
                 <mxCell id="wf-detail-ai" value="価格交渉 アシスタント" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;fontSize=12;" parent="1" vertex="1">
-                    <mxGeometry x="530" y="265" width="160" height="60" as="geometry"/>
+                    <mxGeometry x="450" y="450" width="320" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="wf-chat-left" value="話題リスト" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f1f5f9;strokeColor=#94a3b8;fontSize=11;" parent="1" vertex="1">
                     <mxGeometry x="1230" y="210" width="90" height="110" as="geometry"/>
@@ -43,7 +43,7 @@
                 <mxCell id="wf-chat-main" value="選択中の話題" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eff6ff;strokeColor=#60a5fa;fontSize=11;" parent="1" vertex="1">
                     <mxGeometry x="1370" y="210" width="170" height="110" as="geometry"/>
                 </mxCell>
-                <mxCell id="wf-e1" value="詳細へ" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="wf-list" target="wf-detail" edge="1">
+                <mxCell id="wf-e1" value="詳細" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="wf-list" target="wf-detail" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="wf-e2" value="編集" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="wf-detail" target="wf-create" edge="1">
@@ -54,6 +54,75 @@
                 </mxCell>
                 <mxCell id="wf-e4" value="登録・設定" style="endArrow=block;html=1;rounded=1;strokeColor=#475569;" parent="1" source="wf-mypage" target="wf-notify" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" value="おすすめ商品" style="rounded=1;whiteSpace=wrap;html=1;labelBackgroundColor=none;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+                    <mxGeometry x="100" y="200" width="170" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="自然言語検索" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+                    <mxGeometry x="220" y="170" width="120" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="タイトル&lt;div&gt;概要説明&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+                    <mxGeometry x="100" y="160" width="120" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="商品画像" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+                    <mxGeometry x="445" y="130" width="330" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="商品情報" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+                    <mxGeometry x="450" y="190" width="320" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="AI 質問" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+                    <mxGeometry x="450" y="320" width="320" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="公開コメント" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+                    <mxGeometry x="450" y="390" width="320" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="非公開DM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+                    <mxGeometry x="450" y="510" width="320" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="出品内容" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+                    <mxGeometry x="955" y="150" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="商品説明生成AI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+                    <mxGeometry x="955" y="220" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="商品説明文" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+                    <mxGeometry x="955" y="290" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="残高、売上額、利用額、出品者評価" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+                    <mxGeometry x="1010" y="454" width="390" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="売上額・利用額グラフ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+                    <mxGeometry x="1010" y="518" width="390" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="残高チャージ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+                    <mxGeometry x="1010" y="578" width="255" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" value="支払い方法登録" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+                    <mxGeometry x="1010" y="638" width="390" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="保存した条件" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+                    <mxGeometry x="1010" y="758" width="390" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" value="ブロック" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+                    <mxGeometry x="1010" y="818" width="390" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="19" value="運営DM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+                    <mxGeometry x="1010" y="878" width="390" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" value="住所登録" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+                    <mxGeometry x="1010" y="698" width="390" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="23" value="購入前AI診断" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+                    <mxGeometry x="450" y="250" width="320" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="24" value="Available&lt;div&gt;取引中&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+                    <mxGeometry x="30" y="670" width="180" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="25" value="sold&lt;div&gt;取引完了&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+                    <mxGeometry x="240" y="670" width="180" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="27" value="検索" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="30" y="620" width="190" height="30" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
