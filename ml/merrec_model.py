@@ -4,17 +4,16 @@
 役割:
 MerRec学習結果を推論時に読み込めるよう、特徴量生成関数とモデル入れ物を定義します。
 
-読み方の目安:
-1. 前半の定数とヘルパー関数で、データ列名の揺れや欠損値への耐性を確認します。
-2. 中盤では、テキスト特徴量、数値特徴量、カテゴリ特徴量を機械学習モデルへ渡す流れを確認します。
-3. 後半では、学習済み成果物の保存またはHTTP推論APIとしての公開方法を確認します。
-
 機械学習面の背景:
 MerRecのような行動ログでは、閲覧、いいね、購入開始、購入完了などのイベント強度が異なります。
 そのため、単純な文字列類似だけでなく、イベント重み、TF-IDF、次元削減、近傍探索を組み合わせることで、
 ハッカソンの短時間実装でも「フリマらしい推薦」を再現しやすくしています。
 
 """
+# 実装詳細メモ:
+# 学習スクリプトと推論サーバーの両方からimportされる、推薦モデルの共通定義です。
+# TF-IDF、価格スケーリング、次元削減、近傍探索を同じ順序で使い、学習時と推論時の特徴量空間を一致させます。
+
 from __future__ import annotations
 
 import math
@@ -25,8 +24,10 @@ import numpy as np
 from scipy import sparse
 
 
+# MerRecModel は、学習済み推薦モデルを1つのpickleにまとめるためのデータクラスです。
+# vectorizerやreducerなどの機械学習部品と、推薦候補の商品メタデータを同じ単位で保存することで、
+# 推論サーバーはこのオブジェクトを読み込むだけで「入力テキストを同じ特徴量空間へ変換し、近い商品を探す」処理を再現できます。
 @dataclass
-# 【詳細コメント】このクラスは、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
 class MerRecModel:
     """MerRec推薦モデルをpickleで安全に保存・読み込みするための入れ物です。
 
@@ -43,9 +44,8 @@ class MerRecModel:
     transitions: dict[str, list[dict[str, Any]]]
     category_insights: dict[str, list[str]]
     artifact: dict[str, Any]
-
-
-# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
+# safe_float は、価格データに混ざりやすい欠損値・文字列・通貨記号をfloatへ正規化します。
+# 機械学習の特徴量は数値である必要があり、NaNや「¥1,200」のような表記をそのまま渡すと変換や学習が失敗します。
 def safe_float(value: Any, default: float = 0.0) -> float:
     """価格などの値を、欠損や文字列混入に耐えながらfloatへ変換します。"""
     if value is None:
@@ -59,9 +59,8 @@ def safe_float(value: Any, default: float = 0.0) -> float:
         return float(text)
     except ValueError:
         return default
-
-
-# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
+# price_bucket は、連続値の価格を「安い/中間/高い」のような粗いカテゴリトークンへ変換します。
+# TF-IDFは文字列特徴量を扱うため、価格帯を単語として混ぜることで「同じジャンルでも価格帯が近い商品」を拾いやすくします。
 def price_bucket(price: float) -> str:
     """価格帯を粗く分類し、学習・推論時にテキスト特徴量の1トークンとして使います。"""
     if price <= 0:
@@ -77,9 +76,8 @@ def price_bucket(price: float) -> str:
     if price < 1000:
         return "price_300_1000"
     return "price_over_1000"
-
-
-# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
+# build_feature_text は、商品タイトル・カテゴリ・ブランド・説明・価格帯を1本の学習用テキストにまとめます。
+# 学習時と推論時でこの組み立て規則がずれると、同じ商品でも別の特徴量空間に入ってしまうため、共通関数として定義しています。
 def build_feature_text(
     title: Any = "",
     category: Any = "",
@@ -100,9 +98,8 @@ def build_feature_text(
     if session_titles:
         parts.extend(str(v or "") for v in session_titles)
     return " ".join(part for part in parts if part).strip() or "unknown item"
-
-
-# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
+# build_query_vector は、APIから受け取った検索/推薦条件を学習済み商品のベクトルと同じ形式へ変換します。
+# TF-IDFの語彙、価格スケーラー、SVD次元削減器は学習済みのものを再利用し、新しい入力だけを同じ空間へ写像します。
 def build_query_vector(model: MerRecModel, payload: dict[str, Any]) -> Any:
     """APIリクエストの内容を、学習済み商品と同じベクトル空間へ写像します。"""
     price = safe_float(payload.get("price"), 0.0)
@@ -120,9 +117,8 @@ def build_query_vector(model: MerRecModel, payload: dict[str, Any]) -> Any:
     price_x = model.price_scaler.transform(log_price)
     x = sparse.hstack([text_x, sparse.csr_matrix(price_x).multiply(0.35)], format="csr")
     return model.reducer.transform(x)
-
-
-# 【詳細コメント】この関数は、MerRecデータの前処理・特徴量生成・推薦推論の流れを小さな単位に分けるための要素です。入出力のDataFrame列や辞書キーを確認すると役割が分かりやすくなります。
+# recommend_from_payload は、変換済みクエリベクトルに対して近傍探索を行い、関連商品をAPI向けJSONに整えます。
+# 近傍探索ではコサイン距離が小さい商品ほど内容・価格帯が近いとみなし、scoreには直感的に読める類似度へ変換した値を入れます。
 def recommend_from_payload(model: MerRecModel, payload: dict[str, Any]) -> dict[str, Any]:
     """商品名・カテゴリ・ブランド・価格などの条件から関連商品を返します。"""
     if model.nn is None or not model.items:
