@@ -666,6 +666,13 @@ gcloud config get-value project
 gcloud config set project term-000000
 ```
 
+Cloud Shell に hackathon-backend がある場合
+
+```
+cd ~/hackathon-backend
+git pull origin main
+```
+
 rootでCloud SQLへ接続します。
 
 ```bash
@@ -687,7 +694,7 @@ FLUSH PRIVILEGES;
 
 USE hackathon;
 SET NAMES utf8mb4;
-SOURCE 001_init.sql;
+SOURCE migrations/001_init.sql;
 
 SELECT COUNT(*) AS user_count FROM users;
 SELECT COUNT(*) AS item_count FROM items;
